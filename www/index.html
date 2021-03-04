@@ -18,9 +18,10 @@
     under the License.
 -->
 <html>
-    <head>
-        <meta charset="utf-8">
-        <!--
+
+<head>
+    <meta charset="utf-8">
+    <!--
         Customize this policy to fit your own app's needs. For more guidance, see:
             https://github.com/apache/cordova-plugin-whitelist/blob/master/README.md#content-security-policy
         Some notes:
@@ -29,24 +30,33 @@
             * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
                 * Enable inline JS: add 'unsafe-inline' to default-src
         -->
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' https://api.tiles.mapbox.com https://geoserveis.icgc.cat data: content:;">
-        <meta name="format-detection" content="telephone=no">
-        <meta name="msapplication-tap-highlight" content="no">
-        <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
-        <meta name="color-scheme" content="light dark">
-        <link rel="stylesheet" href="css/index.css">
-        <title>Joni's Cordova App</title>
-    </head>
-    <body>
-        <div class="app">
-            <h1>Practice App</h1>
-            <div id="deviceready" class="blink">
-                <p class="event listening">Connecting...</p>
-                <p class="event received">Ready for Action!</p>
-            </div>
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' https://dades.eicub.net data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' https://geoserveis.icgc.cat data: content:;">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="css/master.css" />
+    <link rel="stylesheet" href="js/libs/leaflet/leaflet.css" />
+        
+    <title>BCN's 2019 Exhibit Finder</title>
+</head>
+
+<body>
+    <div class="app">
+        <h1>Practice App</h1>
+        <div id="deviceready" class="blink">
+            <p class="event listening">Connecting...</p>
+            <p class="event received">Ready for Action!</p>
         </div>
-        <script src="cordova.js"></script>
-        <script src="js/index.js"></script>
-        <script src="js/libs/jquery/jquery-3.5.1.js"></script>
-    </body>
+    </div>
+    <script src="cordova.js"></script>
+    <script src="js/libs/jquery/jquery-3.5.1.js"></script>
+    <script src="js/libs/leaflet/leaflet-src.js"></script>
+    <script src="js/indexB.js"></script>
+   
+
+</body>
+
 </html>

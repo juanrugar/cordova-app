@@ -163,8 +163,7 @@ function onDeviceReady() {
 	// var map = L.map($div[0]);
 
 	// <-- Fragment 06
-	map.on("load",
-		function (e) {
+	map.on("load", function (e) {
 			console.log("map load event handler", e, this);
 			// Fragment 03 -->
 			// https://cordova.apache.org/docs/en/latest/reference/cordova-plugin-geolocation/
@@ -211,28 +210,10 @@ function onDeviceReady() {
 									var $content = $("<div>");
 									var $dl = createExhibitDetails(exhibition);
 									$content.append($dl);
-									// Fragment 06 -->
-									var $button = $("<button>");
-									$button.attr("type", "button");
-									$button.text(literals.exhibitOverlay.mapButton);
-									$button.on("click",
-										function (event) {
-											console.log("Popup button click");
-											event.stopPropagation();
 
-											$divMapView.css("display", "none");
-											$divListView.css("display", "");
-
-											// Asegurar que el elemento es visible en la lista, y abrir detalles
-											var $liselected = $("li[data-id=" + exhibition.id + "]", $divListView);
-											if ($liselected.length > 0) {
-												$liselected[0].scrollIntoView();
-												var $details = $("div.exhibition-data", $liselected);
-												$details.css("display", "");
-											}
-										});
-									$content.append($button);
-									// <-- Fragment 06
+								// Fragment 06 -->
+								//var $button = $("<button>");
+								// <-- Fragment 06
 
 									// Mostrar contenido en el popup
 									// "this" referencia el overlay
@@ -250,70 +231,8 @@ function onDeviceReady() {
 			// <-- Fragment 04
 
 			// Fragment 06 -->
-			promiseFetch.then(
-				function (exhibition) {
-					// Crear elemento list sin orden (ul) para contener las estaciones
-					var $ul = $("<ul>");
-					exhibition.forEach(
-						function (exhibition) {
-							// Crear elemento de lista (li) para la estación, y añadir identificador para poderlo seleccionar
-							// desde código.
-							var $li = $("<li>");
-							$li.attr("data-id", exhibition.id);
-
-							// Crear elemento con nombre de la estación
-							var $div = $("<div>");
-							$div.addClass("exhbition-name");
-							$div.text(exhibition.name);
-							$li.append($div);
-
-							var $divData = $("<div>");
-							$divData.css("display", "none");
-							$divData.addClass("exhibition-data");
-							var $dlData = createExhibitDetails(exhibition);
-							$divData.append($dlData);
-							// Fragment 06 -->
-							// Botón detalles lista
-							var $button = $("<button>");
-							$button.attr("type", "button");
-							$button.text(literals.exhibitOverlay.listButton);
-							$button.on("click",
-								function (event) {
-									console.log("List details button click");
-									event.stopPropagation();
-
-									$divListView.css("display", "none");
-									$divMapView.css("display", "");
-									// Asegurar que el mapa todo el elemento (si todavía no se ha visuaizado, es
-									// posible que no lo hará)
-									map.invalidateSize();
-
-									// Centrar mapa en marcador de la estación
-									var overlay = mapOverlays[exhibition.id];
-									if (overlay) {
-										var ll = overlay.getLatLng();
-										map.flyTo(ll);
-										overlay.fire("click");
-									}
-								});
-							// Cuidado - hay error en el fragmento, el botón se ha de añadir al elemento $divData
-							$divData.append($button);
-							// $details.append($button);
-
-							// <-- Fragment 06
-							$li.append($divData);
-							$li.on("click",
-								function (event) {
-									// Evitar que el evento llega a otras elementos
-									event.stopPropagation();
-
-									$divData.toggle();
-								});
-
-							$ul.append($li);
-						});
-					$divListView.append($ul);
-				});
+			//promiseFetch.then(
+				
 			// <-- Fragment 06
 		});
 

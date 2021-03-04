@@ -1,0 +1,12 @@
+body.master
+{
+    background-image: none;
+    background-color: darkgray;
+    color: darkslategray;
+}
+div.application, 
+div.leaflet-map
+{
+    height: 100%;
+    width: 100%;
+}
