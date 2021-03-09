@@ -17,7 +17,8 @@
  * under the License.
  */
 
-//THIS VERSION CORRESPONDS TO THE FINAL PROJECT USING THE BICING API REST WITH MAP AND LIST
+// THIS VERSION CORRESPONDS TO THE API REST service from https://api.bsmsa.eu/ext/api/bsm/chargepoints/locations
+//(Open Data BCN) https://opendata-ajuntament.barcelona.cat/data/es/dataset/informacio-punts-recarrega-electric
 
 // Fragment 03 -->
 // Añadir función global
@@ -46,12 +47,12 @@ var createOverlay = function (position) {
 
 
 // Fragment 04 -->
-var createExhibitOverlay = function (map, exhibition) {
-	var result = L.circleMarker([exhibition.Latitud, exhibition.Longitud], {
-		"color": "rgba(0,255,0,0.8)",
-		"fillColor": "rgba(0,255,0,0.3)",
+var createPointOverlay = function (map, chargepoint) {
+	var result = L.circleMarker([chargepoint.coordinates.latitude, chargepoint.coordinates.longitude], {
+		"color": "#0000ff",
+		"fillColor": "#0066ff",
 		"fillOpacity": 1,
-		"radius": 10
+		"radius": 8
 	});
 	return result;
 };
@@ -59,28 +60,31 @@ var createExhibitOverlay = function (map, exhibition) {
 
 // Fragment 05 -->
 var literals = {
-	"exhibitOverlay": {
-		"listButton": "Ver en mapa...",
-		"mapButton": "Ver en lista...",
+	"portOverlay": {
 		"fields": {
-			"Equipament": "Equipament:",
-			"TipusEquipament": "Tipus:",
-			"Ambit": "Àmbit:",
-			"Districte": "Districte:",
-			"Any": "Any",
-			"Visitants": "Visitants (milers):"
+			"id":"id: ",
+			"address": {
+				"address_string":"Direcció estació de recàrrega: "
+			},
+			"stations" : {
+					"ports": {
+						"port_status": "Estat del port: "
+					}
+			}
 		}
 	}
 };
 
-var createExhibitDetails = function (exhibition) {
+var createPointDetails = function (chargepoint) {
 	var $dl = $("<dl>");
-	["Equipament", "TipusEquipament", "Ambit", "Districte", "Any", "Visitants"].forEach(
+	["id", ["address_string"]].forEach(
 		function (propName) {
-			var name = literals.exhibitOverlay.fields[propName] || propName;
+			var name = literals.portOverlay.fields[propName] ||
+			literals.portOverlay.fields.address[propName] 
+			|| propName; 
 			var id = propName;
-			var value = exhibition[propName];
-
+			var value = chargepoint[propName];
+			
 			var $dt = $("<dt>");
 			$dt.text(name);
 			$dl.append($dt);
@@ -93,15 +97,12 @@ var createExhibitDetails = function (exhibition) {
 };
 // <-- Fragment 05
 
-
-
-
 // Wait for the deviceready event before using any of Cordova's device APIs.
 // See https://cordova.apache.org/docs/en/latest/cordova/events/events.html#deviceready
 document.addEventListener('deviceready', onDeviceReady, false);
 
 // Fragment 04 --> HERE WE SET THE URL OF THE REST SOURCE
-var promiseFetch = fetch("https://dades.eicub.net/api/1/museusexposicions-visitants?Any=2019&format=json"); //https://api.citybik.es/v2/networks/bicing
+var promiseFetch = fetch("https://api.bsmsa.eu/ext/api/bsm/chargepoints/locations"); //https://api.citybik.es/v2/networks/bicing
 promiseFetch = promiseFetch.then(
 	function (response) {
 		console.log("Procesando respuesta a fetch...");
@@ -116,8 +117,8 @@ promiseFetch = promiseFetch.catch(
 	function (error) {
 		console.error("Ocurrió un error en el proceso", error);
 		return {
-			"exhibition": {	//"network": {
-				"Array": []	//"stations": []
+			"locations": {	
+				"array" : []					
 			}
 		};
 	});
@@ -165,8 +166,7 @@ function onDeviceReady() {
 	// var map = L.map($div[0]);
 
 	// <-- Fragment 06
-	map.on("load",
-		function (e) {
+	map.on("load", function (e) {
 			console.log("map load event handler", e, this);
 			// Fragment 03 -->
 			// https://cordova.apache.org/docs/en/latest/reference/cordova-plugin-geolocation/
@@ -198,43 +198,25 @@ function onDeviceReady() {
 			// <-- Fragment 05
 
 			promiseFetch.then(
-				function (exhibition) 
+				function (electostation) 
 				{	
-					console.log("exhibition", exhibition);
-					exhibition.forEach(
-						function (exhibition) {
-							var overlay = createExhibitOverlay(map, exhibition);
+					console.log("chargepoint", electostation);
+					electostation.locations.forEach(
+						function (chargepoint) {
+							var overlay = createPointOverlay(map, chargepoint);
 							overlay.on("click",
 								function (event) {
-									console.log("Exhibition overlay - click event handler", event, this);
+									console.log("Chargepoint overlay - click event handler", event, this);
 
 									// Fragment 05 -->
 									// Crear lista de definiciones (dl) con elementos título (dt)/definición (dd)
 									var $content = $("<div>");
-									var $dl = createExhibitDetails(exhibition);
+									var $dl = createPointDetails(chargepoint);
 									$content.append($dl);
-									// Fragment 06 -->
-									var $button = $("<button>");
-									$button.attr("type", "button");
-									$button.text(literals.exhibitOverlay.mapButton);
-									$button.on("click",
-										function (event) {
-											console.log("Popup button click");
-											event.stopPropagation();
 
-											$divMapView.css("display", "none");
-											$divListView.css("display", "");
-
-											// Asegurar que el elemento es visible en la lista, y abrir detalles
-											var $liselected = $("li[data-id=" + exhibition.id + "]", $divListView);
-											if ($liselected.length > 0) {
-												$liselected[0].scrollIntoView();
-												var $details = $("div.exhibition-data", $liselected);
-												$details.css("display", "");
-											}
-										});
-									$content.append($button);
-									// <-- Fragment 06
+								// Fragment 06 -->
+								//var $button = $("<button>");
+								// <-- Fragment 06
 
 									// Mostrar contenido en el popup
 									// "this" referencia el overlay
@@ -245,77 +227,15 @@ function onDeviceReady() {
 									// <-- Fragment 05
 								});
 							// Añadir referencia al overlay a mapOverlays
-							mapOverlays[exhibition.id] = overlay;
+							mapOverlays[chargepoint.id] = overlay;
 							overlay.addTo(map);
 						});
 				});
 			// <-- Fragment 04
 
 			// Fragment 06 -->
-			promiseFetch.then(
-				function (exhibition) {
-					// Crear elemento list sin orden (ul) para contener las estaciones
-					var $ul = $("<ul>");
-					exhibition.forEach(
-						function (exhibition) {
-							// Crear elemento de lista (li) para la estación, y añadir identificador para poderlo seleccionar
-							// desde código.
-							var $li = $("<li>");
-							$li.attr("data-id", exhibition.id);
-
-							// Crear elemento con nombre de la estación
-							var $div = $("<div>");
-							$div.addClass("exhbition-name");
-							$div.text(exhibition.name);
-							$li.append($div);
-
-							var $divData = $("<div>");
-							$divData.css("display", "none");
-							$divData.addClass("exhibition-data");
-							var $dlData = createExhibitDetails(exhibition);
-							$divData.append($dlData);
-							// Fragment 06 -->
-							// Botón detalles lista
-							var $button = $("<button>");
-							$button.attr("type", "button");
-							$button.text(literals.exhibitOverlay.listButton);
-							$button.on("click",
-								function (event) {
-									console.log("List details button click");
-									event.stopPropagation();
-
-									$divListView.css("display", "none");
-									$divMapView.css("display", "");
-									// Asegurar que el mapa todo el elemento (si todavía no se ha visuaizado, es
-									// posible que no lo hará)
-									map.invalidateSize();
-
-									// Centrar mapa en marcador de la estación
-									var overlay = mapOverlays[exhibition.id];
-									if (overlay) {
-										var ll = overlay.getLatLng();
-										map.flyTo(ll);
-										overlay.fire("click");
-									}
-								});
-							// Cuidado - hay error en el fragmento, el botón se ha de añadir al elemento $divData
-							$divData.append($button);
-							// $details.append($button);
-
-							// <-- Fragment 06
-							$li.append($divData);
-							$li.on("click",
-								function (event) {
-									// Evitar que el evento llega a otras elementos
-									event.stopPropagation();
-
-									$divData.toggle();
-								});
-
-							$ul.append($li);
-						});
-					$divListView.append($ul);
-				});
+			//promiseFetch.then(
+				
 			// <-- Fragment 06
 		});
 

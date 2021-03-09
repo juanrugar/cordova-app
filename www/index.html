@@ -31,7 +31,7 @@
                 * Enable inline JS: add 'unsafe-inline' to default-src
         -->
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self' https://dades.eicub.net data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' https://geoserveis.icgc.cat data: content:;">
+        content="default-src 'self' https://api.bsmsa.eu/ https://dades.eicub.net data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' https://a.tile.openstreetmap.org/ https://b.tile.openstreetmap.org/ https://c.tile.openstreetmap.org/ https://geoserveis.icgc.cat data: content:;">
     <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
@@ -44,17 +44,22 @@
 </head>
 
 <body>
+    
     <div class="app">
-        <h1>Practice App</h1>
+        <div class="titlePane">
+            BCN 2019 Exhibit Scape
+        </div>
         <div id="deviceready" class="blink">
             <p class="event listening">Connecting...</p>
             <p class="event received">Ready for Action!</p>
         </div>
+       
     </div>
+    
     <script src="cordova.js"></script>
     <script src="js/libs/jquery/jquery-3.5.1.js"></script>
     <script src="js/libs/leaflet/leaflet-src.js"></script>
-    <script src="js/indexB.js"></script>
+    <script src="js/index.js"></script>
    
 
 </body>

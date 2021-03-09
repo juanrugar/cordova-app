@@ -17,15 +17,19 @@
  * under the License.
  */
 
+//THIS VERSION USES THE BARCELONA CULTURA API REST SERVICE https://barcelonadadescultura.bcn.cat/dades-obertes/
+//CRS url (index.html): https://dades.eicub.net
+
+
 // Fragment 03 -->
 // Añadir función global
 var createOverlay = function (position) {
 	var ll = [position.coords.latitude, position.coords.longitude];
 	var result = L.circle(ll, {
-		color: "rgba(255,0,0,0.8)",
-		fillColor: "rgba(255,0,0,0.3)",
-		fillOpacity: 1,
-		radius: position.coords.accuracy || 100
+		color: "#FF0000",
+		fillColor: "#FF0000",
+		fillOpacity: 0.2,
+		radius: position.coords.accuracy || 50
 	});
 
 	var $popupContent = $("<div>");
@@ -46,10 +50,10 @@ var createOverlay = function (position) {
 // Fragment 04 -->
 var createExhibitOverlay = function (map, exhibition) {
 	var result = L.circleMarker([exhibition.Latitud, exhibition.Longitud], {
-		"color": "rgba(0,255,0,0.8)",
-		"fillColor": "rgba(0,255,0,0.3)",
-		"fillOpacity": 1,
-		"radius": 10
+		"color": "#000000",
+		"fillColor": "#D2691E",
+		"fillOpacity": 0.8,
+		"radius": 8
 	});
 	return result;
 };
@@ -73,7 +77,7 @@ var literals = {
 
 var createExhibitDetails = function (exhibition) {
 	var $dl = $("<dl>");
-	["Equipament", "TipusEquipament", "Ambit", "Districte", "Any", "Visitants"].forEach(
+	["Equipament", "TipusEquipament", "Ambit", "Districte", "Visitants"].forEach(	//"Any",
 		function (propName) {
 			var name = literals.exhibitOverlay.fields[propName] || propName;
 			var id = propName;
@@ -99,7 +103,8 @@ var createExhibitDetails = function (exhibition) {
 document.addEventListener('deviceready', onDeviceReady, false);
 
 // Fragment 04 --> HERE WE SET THE URL OF THE REST SOURCE
-var promiseFetch = fetch("https://dades.eicub.net/api/1/museusexposicions-visitants?Any=2019&format=json"); //https://api.citybik.es/v2/networks/bicing
+var promiseFetch = fetch("https://dades.eicub.net/api/1/museusexposicions-visitants?Any=2019"); //https://api.citybik.es/v2/networks/bicing
+
 promiseFetch = promiseFetch.then(
 	function (response) {
 		console.log("Procesando respuesta a fetch...");
@@ -110,6 +115,7 @@ promiseFetch = promiseFetch.then(
 		}
 		return response.json();
 	});
+
 promiseFetch = promiseFetch.catch(
 	function (error) {
 		console.error("Ocurrió un error en el proceso", error);
@@ -119,6 +125,7 @@ promiseFetch = promiseFetch.catch(
 			}
 		};
 	});
+
 // <-- Fragment 04
 function onDeviceReady() {
 	// Cordova is now initialized. Have fun!
@@ -163,170 +170,117 @@ function onDeviceReady() {
 	// var map = L.map($div[0]);
 
 	// <-- Fragment 06
-	map.on("load",
-		function (e) {
-			console.log("map load event handler", e, this);
-			// Fragment 03 -->
-			// https://cordova.apache.org/docs/en/latest/reference/cordova-plugin-geolocation/
-			navigator.geolocation.getCurrentPosition(
-				function (position) {
-					console.log("Posición", position);
-					if (overlay) {
-						overlay.remove();
-					}
-					var latLng = [position.coords.latitude, position.coords.longitude];
-					map.setView(latLng, 16);
-					overlay = createOverlay(position);
-					overlay.addTo(map);
-				},
-				function (error) {
-					console.error("Ocurrió un error al obtener la posición", error);
-				},
-				{
-					"timeout": 3000
-				});
-			// <-- Fragment 03
+	map.on("load", function (e) {
+		console.log("map load event handler", e, this);
+		// Fragment 03 -->
+		// https://cordova.apache.org/docs/en/latest/reference/cordova-plugin-geolocation/
+		navigator.geolocation.getCurrentPosition(
+			function (position) {
+				console.log("Posición", position);
+				if (overlay) {
+					overlay.remove();
+				}
+				var latLng = [position.coords.latitude, position.coords.longitude];
+				map.setView(latLng, 16);
+				overlay = createOverlay(position);
+				overlay.addTo(map);
+			},
+			function (error) {
+				console.error("Ocurrió un error al obtener la posición", error);
+			},
+			{
+				"timeout": 3000
+			});
+		// <-- Fragment 03
 
-			// Fragment 04 -->
-			// mapOverlays nos permitirá obtener un overlay a partir de un id de estación.
-			var mapOverlays = {};
+		// Fragment 04 -->
+		// mapOverlays nos permitirá obtener un overlay a partir de un id de estación.
+		var mapOverlays = {};
 
-			// Fragment 05 -->
-			var popup = L.popup();
-			// <-- Fragment 05
+		// Fragment 05 -->
+		var popup = L.popup();
+		// <-- Fragment 05
 
-			promiseFetch.then(
-				function (exhibition) 
-				{	
-					console.log("exhibition", exhibition);
-					exhibition.forEach(
-						function (exhibition) {
-							var overlay = createExhibitOverlay(map, exhibition);
-							overlay.on("click",
-								function (event) {
-									console.log("Exhibition overlay - click event handler", event, this);
+		promiseFetch.then(
+			function (exhibition) {
+				console.log("exhibition", exhibition);
 
-									// Fragment 05 -->
-									// Crear lista de definiciones (dl) con elementos título (dt)/definición (dd)
-									var $content = $("<div>");
-									var $dl = createExhibitDetails(exhibition);
-									$content.append($dl);
-									// Fragment 06 -->
-									var $button = $("<button>");
-									$button.attr("type", "button");
-									$button.text(literals.exhibitOverlay.mapButton);
-									$button.on("click",
-										function (event) {
-											console.log("Popup button click");
-											event.stopPropagation();
+				//here's Colin's filtering snipet START -->
+				exhibition = exhibition.filter(
+					function (item) {
+						if (!item.Latitud || !item.Longitud) {
+							console.warn("Unlocated exhibition", item);
+						}
+						return item.Latitud && item.Longitud;
+					});
+				console.log("exhibition (filtered)", exhibition);
 
-											$divMapView.css("display", "none");
-											$divListView.css("display", "");
+				//Colin's filtering snipet 	END -->
 
-											// Asegurar que el elemento es visible en la lista, y abrir detalles
-											var $liselected = $("li[data-id=" + exhibition.id + "]", $divListView);
-											if ($liselected.length > 0) {
-												$liselected[0].scrollIntoView();
-												var $details = $("div.exhibition-data", $liselected);
-												$details.css("display", "");
-											}
-										});
-									$content.append($button);
-									// <-- Fragment 06
+				exhibition.forEach(
+					function (exhibition) {
+						var overlay = createExhibitOverlay(map, exhibition);
+						overlay.on("click",
+							function (event) {
+								console.log("Exhibition overlay - click event handler", event, this);
 
-									// Mostrar contenido en el popup
-									// "this" referencia el overlay
-									var latLng = this.getLatLng();
-									popup.setLatLng(latLng);
-									popup.setContent($content[0]);
-									popup.openOn(map);
-									// <-- Fragment 05
-								});
-							// Añadir referencia al overlay a mapOverlays
-							mapOverlays[exhibition.id] = overlay;
-							overlay.addTo(map);
-						});
-				});
-			// <-- Fragment 04
+								// Fragment 05 -->
+								// Crear lista de definiciones (dl) con elementos título (dt)/definición (dd)
+								var $content = $("<div>");
+								var $dl = createExhibitDetails(exhibition);
+								$content.append($dl);
 
-			// Fragment 06 -->
-			promiseFetch.then(
-				function (exhibition) {
-					// Crear elemento list sin orden (ul) para contener las estaciones
-					var $ul = $("<ul>");
-					exhibition.forEach(
-						function (exhibition) {
-							// Crear elemento de lista (li) para la estación, y añadir identificador para poderlo seleccionar
-							// desde código.
-							var $li = $("<li>");
-							$li.attr("data-id", exhibition.id);
+								// Fragment 06 -->
+								//var $button = $("<button>");
+								// <-- Fragment 06
 
-							// Crear elemento con nombre de la estación
-							var $div = $("<div>");
-							$div.addClass("exhbition-name");
-							$div.text(exhibition.name);
-							$li.append($div);
+								// Mostrar contenido en el popup
+								// "this" referencia el overlay
+								var latLng = this.getLatLng();
+								popup.setLatLng(latLng);
+								popup.setContent($content[0]);
+								popup.openOn(map);
+								// <-- Fragment 05
+							});
+						// Añadir referencia al overlay a mapOverlays
+						mapOverlays[exhibition.id] = overlay;
+						overlay.addTo(map);
+					});
+			});
+		// <-- Fragment 04
 
-							var $divData = $("<div>");
-							$divData.css("display", "none");
-							$divData.addClass("exhibition-data");
-							var $dlData = createExhibitDetails(exhibition);
-							$divData.append($dlData);
-							// Fragment 06 -->
-							// Botón detalles lista
-							var $button = $("<button>");
-							$button.attr("type", "button");
-							$button.text(literals.exhibitOverlay.listButton);
-							$button.on("click",
-								function (event) {
-									console.log("List details button click");
-									event.stopPropagation();
+		// Fragment 06 -->
+		//promiseFetch.then(
 
-									$divListView.css("display", "none");
-									$divMapView.css("display", "");
-									// Asegurar que el mapa todo el elemento (si todavía no se ha visuaizado, es
-									// posible que no lo hará)
-									map.invalidateSize();
-
-									// Centrar mapa en marcador de la estación
-									var overlay = mapOverlays[exhibition.id];
-									if (overlay) {
-										var ll = overlay.getLatLng();
-										map.flyTo(ll);
-										overlay.fire("click");
-									}
-								});
-							// Cuidado - hay error en el fragmento, el botón se ha de añadir al elemento $divData
-							$divData.append($button);
-							// $details.append($button);
-
-							// <-- Fragment 06
-							$li.append($divData);
-							$li.on("click",
-								function (event) {
-									// Evitar que el evento llega a otras elementos
-									event.stopPropagation();
-
-									$divData.toggle();
-								});
-
-							$ul.append($li);
-						});
-					$divListView.append($ul);
-				});
-			// <-- Fragment 06
-		});
+		// <-- Fragment 06
+	});
 
 	// Posicionar mapa. Luego la posición cambiará por la geolocalización
 	map.setView([41.3976, 2.1965], 13);
 
 	// http://geoserveis.icc.cat/icc_mapesmultibase/noutm/wmts/topo/GRID3857/18/132666/97898.jpeg
-	var tileLayer = L.tileLayer("https://geoserveis.icgc.cat/icc_mapesmultibase/noutm/wmts/{id}/{z}/{x}/{y}.jpeg", {
-		"attribution": '<a href="https://geoserveis.icgc.cat/">Institut Cartogràfic i Geològic de Catalunya</a>',
-		"maxZoom": 20,
-		"id": 'topo/GRID3857'
+		var icgc = L.tileLayer("https://geoserveis.icgc.cat/icc_mapesmultibase/noutm/wmts/{id}/{z}/{x}/{y}.jpeg", {
+			"attribution": '<a href="https://geoserveis.icgc.cat/">Institut Cartogràfic i Geològic de Catalunya</a>',
+			"maxZoom": 19,
+			"id": 'topo/GRID3857'
+		});	
+	
+	//Basemap from OpenStreetMap (https://wiki.openstreetmap.org/wiki/Standard_tile_layer)
+	var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		"maxZoom": 19,
+		"attribution": '&copy; <a href="http://www.openstreetmap.org/copyright"/>OpenStreetMap</a>'
 	});
 
-	tileLayer.addTo(map);
+	osm.addTo(map);
+
+	var baseLayers = {
+		"icgc" : icgc,
+		"osm" : osm
+	}
+
+	var layerControl = L.control.layers(baseLayers, null, {collapsed: false});
+
+	layerControl.addTo(map);
+	
 	// <-- Fragment 02
 }

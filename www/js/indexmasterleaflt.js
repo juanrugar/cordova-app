@@ -17,8 +17,6 @@
  * under the License.
  */
 
-//THIS VERSION CORRESPONDS TO THE FINAL PROJECT USING THE BICING API REST WITH MAP AND LIST
-
 // Fragment 03 -->
 // Añadir función global
 var createOverlay = function (position) {
